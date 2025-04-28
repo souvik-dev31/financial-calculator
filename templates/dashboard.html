@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="transition duration-500">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Health Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <style>
+    /* Fade-in animation */
+    @keyframes fade-in-down {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+      animation: fade-in-down 0.6s ease-out both;
+    }
+    /* Spinner Animation */
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-900 animate-fade-in-down transition-all duration-500">
+
+  <!-- Loading Spinner Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Dark Mode Toggle Button -->
+  <div class="fixed top-4 right-4 z-10">
+    <button onclick="toggleDarkMode()" class="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+      Toggle Dark Mode
+    </button>
+  </div>
+
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-center mb-10 text-blue-700 dark:text-blue-300 transition-all duration-500 hover:scale-110">
+      Financial Health Dashboard
+    </h1>
+
+    <!-- Financial Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
+        <h2 class="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">Total Income</h2>
+        <p class="text-3xl text-green-600 font-bold">${{ "%.2f"|format(total_income) }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
+        <h2 class="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">Total Expenses</h2>
+        <p class="text-3xl text-red-600 font-bold">${{ "%.2f"|format(total_expenses) }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
+        <h2 class="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">Savings Rate</h2>
+        <p class="text-3xl text-blue-600 font-bold">{{ "%.1f"|format(savings_rate * 100) }}%</p>
+      </div>
+    </div>
+
+    <!-- Expense Visualization -->
+    {% if expense_chart %}
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg mb-10 transition-transform transform hover:scale-[1.02] hover:shadow-2xl duration-300">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Expense Breakdown</h2>
+      <div class="w-full">
+        {{ expense_chart|safe }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Add Transaction Form -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg transition-transform transform hover:scale-[1.01] hover:shadow-2xl duration-300">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-700 dark:text-gray-300">Add Transaction</h2>
+      <form method="POST" action="{{ url_for('add_transaction') }}">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
+            <select name="type" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white">
+              <option value="income">Income</option>
+              <option value="expenses">Expense</option>
+              <option value="savings">Savings</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
+            <input type="number" name="amount" step="0.01" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+            <input type="text" name="category" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+            <input type="date" name="date" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white" required>
+          </div>
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-300">
+          Add Transaction
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript to control loading spinner and dark mode -->
+  <script>
+    // Hide loading spinner after page load
+    window.onload = function() {
+      document.getElementById('loading-overlay').style.display = 'none';
+    };
+
+    // Toggle dark mode
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      document.body.classList.toggle('bg-gray-900');
+      document.body.classList.toggle('text-white');
+      document.body.classList.toggle('text-gray-900');
+    }
+  </script>
+
+</body>
+</html>
