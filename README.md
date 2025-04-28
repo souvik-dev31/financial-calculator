@@ -26,11 +26,3 @@ python app.py
 ```
 Then open http://localhost:5000 in your browser.
 
-## Configuration
-Create a `.env` file in the root directory with: 
-
-## Next Steps
-- Add user authentication
-- Connect to a database for persistent storage
-- Add more financial health metrics and visualizations
-- Implement budget tracking and alerts
